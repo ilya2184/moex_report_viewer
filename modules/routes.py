@@ -96,6 +96,10 @@ def register_routes(app, converter, temp_manager):
         # Генерируем имя для скачивания
         original_name = request.args.get('name', 'converted')
         download_name = generate_filename(original_name, suffix='converted')
+        # Всегда предлагаем скачивание именно как HTML файл
+        base, ext = os.path.splitext(download_name)
+        if ext.lower() != '.html':
+            download_name = f"{base}.html"
         
         return send_file(
             filepath,

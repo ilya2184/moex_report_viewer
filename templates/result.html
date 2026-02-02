@@ -166,7 +166,7 @@
                 Скачать HTML
             </a>
             
-            <button onclick="window.print()" class="btn">
+            <button type="button" onclick="printResult()" class="btn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
                     <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/>
                 </svg>
@@ -190,7 +190,7 @@
         <h4>Что делать дальше?</h4>
         <ul>
             <li>Для скачивания HTML файла на компьютер нажмите кнопку "Скачать HTML"</li>
-            <li>Для печати документа используйте кнопку "Печать" или сочетание клавиш Ctrl+P</li>
+            <li>Для печати документа используйте кнопку "Печать"</li>
             <li>Файл будет автоматически удалён с сервера через 1 час</li>
             <li>Для конвертации нового файла нажмите "Новый файл"</li>
         </ul>
@@ -207,12 +207,52 @@
 document.addEventListener('DOMContentLoaded', function() {
     const frame = document.getElementById('resultFrame');
     const scrollTopBtn = document.getElementById('scrollTop');
+    let objectUrl = null;
+
+    function printIframeContents(iframeEl) {
+        if (!iframeEl || !iframeEl.contentWindow) {
+            window.print();
+            return;
+        }
+        try {
+            iframeEl.contentWindow.focus();
+            iframeEl.contentWindow.print();
+        } catch (e) {
+            // Fallback, если браузер блокирует печать iframe
+            window.print();
+        }
+    }
+
+    function printWhenReady() {
+        // Если iframe ещё не загрузился, печатаем после события load
+        try {
+            const doc = frame && frame.contentDocument;
+            const isReady = doc && doc.readyState === 'complete';
+            if (isReady) {
+                printIframeContents(frame);
+            } else {
+                frame.addEventListener('load', () => printIframeContents(frame), { once: true });
+            }
+        } catch (e) {
+            frame.addEventListener('load', () => printIframeContents(frame), { once: true });
+        }
+    }
+
+    // Делаем доступной из onclick
+    window.printResult = printWhenReady;
     
     // Загружаем HTML в iframe
     const htmlContent = `{{ html_content|safe }}`;
     const blob = new Blob([htmlContent], {type: 'text/html'});
-    const url = URL.createObjectURL(blob);
-    frame.src = url;
+    objectUrl = URL.createObjectURL(blob);
+    frame.src = objectUrl;
+    frame.addEventListener('load', () => {
+        // Освобождаем blob URL после загрузки (содержимое уже в памяти iframe)
+        if (objectUrl) {
+            URL.revokeObjectURL(objectUrl);
+            objectUrl = null;
+        }
+    }, { once: true });
     
     // Показываем кнопку "Наверх" при прокрутке
     window.addEventListener('scroll', function() {
@@ -231,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Автоматически запускаем печать, если есть параметр ?print
     if (window.location.search.includes('print')) {
         setTimeout(() => {
-            window.print();
+            printWhenReady();
         }, 1000);
     }
 });

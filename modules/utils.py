@@ -57,29 +57,62 @@ def extract_encoding_from_xml(xml_bytes):
     return 'windows-1251'  # значение по умолчанию для MOEX
 
 def fix_encoding_issues(text):
-    """Исправление проблем с кодировкой"""
-    # Базовые замены для исправления двойной кодировки
-    replacements = {
-        'РЎ': 'С', 'Рћ': 'О', 'Р': '', 'С': 'С',
-        'вЂњ': '"', 'вЂќ': '"', 'вЂ"': '-',
-        'вЂ™': "'", 'вЂ"': '—', 'вЂ"': '–'
-    }
+    """
+    Исправление типичных проблем с "кракозябрами" после конвертации.
     
-    for wrong, correct in replacements.items():
-        text = text.replace(wrong, correct)
-    
-    # Исправление двойной кодировки windows-1251 -> utf-8 -> windows-1251
-    def decode_double_encoded(match):
+    Важно: эта функция НЕ должна портить уже корректный UTF-8 текст.
+    Самая частая проблема для MOEX-отчётов: результат (UTF-8) где-то был
+    ошибочно интерпретирован как cp1251, и в HTML попадают строки вида "РќР°...".
+    """
+
+    if not text:
+        return text
+
+    def _try_recode_fragment(s: str, src: str, dst: str) -> str | None:
         try:
-            return match.group(0).encode('utf-8').decode('windows-1251')
-        except:
-            return match.group(0)
-    
-    # Ищем последовательности, похожие на двойную кодировку
-    pattern = r'[А-Яа-яРСТУФХЦЧШЩЪЫЬЭЮЯ]{2,}'
-    text = re.sub(pattern, decode_double_encoded, text)
-    
-    return text
+            return s.encode(src).decode(dst)
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            return None
+
+    # 1) Частые "типографские" кракозябры (кавычки/тире), которые нередко встречаются отдельно.
+    text = (
+        text.replace('â€”', '—')
+            .replace('â€“', '–')
+            .replace('â€˜', '‘')
+            .replace('â€™', '’')
+            .replace('â€œ', '“')
+            .replace('â€\u009d', '”')
+            .replace('â€\u009c', '“')
+            .replace('â€\u0099', '’')
+            .replace('â€\u0094', '—')
+            .replace('â€\u0093', '–')
+            .replace('вЂњ', '“')
+            .replace('вЂќ', '”')
+            .replace('вЂ™', '’')
+            .replace('вЂ”', '—')
+            .replace('вЂ–', '–')
+    )
+
+    # 2) Основная проблема: куски текста вида "РќР°Рё..." (UTF‑8 байты прочитали как cp1251).
+    # Важно: в одном HTML могут быть и корректные русские слова (например "БИК"),
+    # поэтому перекодируем ТОЛЬКО те фрагменты, которые явно похожи на моджибейк.
+    #
+    # Этот паттерн ловит характерные последовательности чередования "Р/С + кириллица".
+    mojibake_pattern = re.compile(r'(?:[РС][\u0400-\u04FF]){4,}')
+
+    def _fix_match(m: re.Match) -> str:
+        frag = m.group(0)
+        # Пробуем самый частый вариант
+        fixed = _try_recode_fragment(frag, 'cp1251', 'utf-8')
+        if fixed:
+            return fixed
+        # Резервный вариант
+        fixed = _try_recode_fragment(frag, 'latin1', 'utf-8')
+        if fixed:
+            return fixed
+        return frag
+
+    return mojibake_pattern.sub(_fix_match, text)
 
 class TemporaryFileManager:
     """Менеджер временных файлов"""
