@@ -1,0 +1,140 @@
+<!-- templates/error.html -->
+{% extends "base.html" %}
+
+{% block title %}Ошибка - MOEX Converter{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-content">
+        <div class="error-icon">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="#dc3545" stroke-width="2"/>
+                <path d="M12 8V12" stroke="#dc3545" stroke-width="2" stroke-linecap="round"/>
+                <path d="M12 16H12.01" stroke="#dc3545" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+        
+        <h1>Произошла ошибка</h1>
+        
+        <div class="error-message">
+            <p>{{ error }}</p>
+        </div>
+        
+        <div class="error-actions">
+            <a href="{{ url_for('index') }}" class="btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white" style="margin-right: 8px;">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+                Вернуться на главную
+            </a>
+            
+            <button onclick="history.back()" class="btn btn-outline">
+                Назад
+            </button>
+        </div>
+        
+        <div class="error-help">
+            <h3>Возможные причины:</h3>
+            <ul>
+                <li>Файл поврежден или имеет неверный формат</li>
+                <li>Превышен максимальный размер файла (16MB)</li>
+                <li>Проблемы с подключением к интернету</li>
+                <li>Временные технические неполадки</li>
+            </ul>
+            
+            <p>Если ошибка повторяется, попробуйте:</p>
+            <ol>
+                <li>Проверить целостность XML файла</li>
+                <li>Убедиться, что файл имеет кодировку Windows-1251 или UTF-8</li>
+                <li>Попробовать другой файл</li>
+                <li>Обновить страницу и попробовать снова</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<style>
+    .error-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 70vh;
+        padding: 40px 20px;
+    }
+    
+    .error-content {
+        max-width: 600px;
+        text-align: center;
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    
+    .error-icon {
+        margin-bottom: 30px;
+    }
+    
+    .error-content h1 {
+        color: #dc3545;
+        margin-bottom: 20px;
+        font-size: 2rem;
+    }
+    
+    .error-message {
+        background: #fee;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .error-message p {
+        color: #c33;
+        margin: 0;
+        font-size: 1.1rem;
+    }
+    
+    .error-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-bottom: 40px;
+        flex-wrap: wrap;
+    }
+    
+    .error-help {
+        text-align: left;
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 10px;
+        margin-top: 30px;
+    }
+    
+    .error-help h3 {
+        color: #333;
+        margin-bottom: 15px;
+    }
+    
+    .error-help ul,
+    .error-help ol {
+        padding-left: 20px;
+        color: #666;
+        margin-bottom: 20px;
+    }
+    
+    .error-help li {
+        margin-bottom: 8px;
+    }
+    
+    @media (max-width: 768px) {
+        .error-content {
+            padding: 20px;
+        }
+        
+        .error-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}

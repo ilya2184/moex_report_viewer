@@ -1,0 +1,274 @@
+<!-- templates/index.html -->
+{% extends "base.html" %}
+
+{% block title %}Конвертер XML MOEX → HTML{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero {
+        text-align: center;
+        padding: 60px 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .hero h1 {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+    }
+    
+    .hero p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        max-width: 600px;
+        margin: 0 auto 30px;
+    }
+    
+    .upload-container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+    
+    .upload-box {
+        border: 3px dashed #ddd;
+        border-radius: 15px;
+        padding: 50px 30px;
+        text-align: center;
+        transition: all 0.3s ease;
+        background: white;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    
+    .upload-box.dragover {
+        border-color: #667eea;
+        background: #f8f9ff;
+        transform: translateY(-5px);
+    }
+    
+    .upload-icon {
+        font-size: 64px;
+        color: #667eea;
+        margin-bottom: 20px;
+    }
+    
+    .upload-text h3 {
+        margin-bottom: 10px;
+        color: #333;
+    }
+    
+    .upload-text p {
+        color: #666;
+        margin-bottom: 20px;
+    }
+    
+    .file-input {
+        display: none;
+    }
+    
+    .btn {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        font-size: 1.1rem;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .file-name {
+        margin-top: 20px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        color: #495057;
+    }
+    
+    .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+        margin: 60px auto;
+        max-width: 1200px;
+        padding: 0 20px;
+    }
+    
+    .feature-card {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .feature-icon {
+        font-size: 40px;
+        color: #667eea;
+        margin-bottom: 20px;
+    }
+    
+    .feature-card h4 {
+        margin-bottom: 15px;
+        color: #333;
+    }
+    
+    .feature-card p {
+        color: #666;
+        line-height: 1.6;
+    }
+    
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 2rem;
+        }
+        
+        .upload-box {
+            padding: 30px 20px;
+        }
+        
+        .features {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="container">
+        <h1>Конвертер XML отчётов MOEX</h1>
+        <p>Быстрое и простое преобразование XML файлов Московской Биржи в удобный HTML формат для просмотра и печати</p>
+    </div>
+</section>
+
+<div class="upload-container">
+    <div class="upload-box" id="uploadBox">
+        <div class="upload-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="#667eea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M17 8L12 3L7 8" stroke="#667eea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 3V15" stroke="#667eea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        
+        <div class="upload-text">
+            <h3>Загрузите XML файл</h3>
+            <p>Перетащите файл сюда или нажмите для выбора</p>
+            <p class="small">Поддерживаются файлы .xml (максимальный размер: 16MB)</p>
+            
+            <form id="uploadForm" method="post" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+                <input type="file" id="fileInput" name="xml_file" class="file-input" accept=".xml" required>
+                <label for="fileInput" class="btn" id="selectFileBtn">
+                    Выбрать файл
+                </label>
+                <button type="submit" class="btn" id="convertBtn" style="margin-left: 10px;">
+                    Преобразовать
+                </button>
+            </form>
+            
+            <div id="fileName" class="file-name"></div>
+        </div>
+    </div>
+</div>
+
+<section class="features">
+    <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h4>Быстрое преобразование</h4>
+        <p>Конвертация XML в HTML за секунды с сохранением структуры данных</p>
+    </div>
+    
+    <div class="feature-card">
+        <div class="feature-icon">🔧</div>
+        <h4>Автоматическая обработка</h4>
+        <p>Автоматическое определение кодировки и загрузка необходимых стилей</p>
+    </div>
+    
+    <div class="feature-card">
+        <div class="feature-icon">🖨️</div>
+        <h4>Удобный просмотр и печать</h4>
+        <p>Создание HTML файлов, готовых к просмотру в браузере и печати</p>
+    </div>
+    
+    <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h4>Безопасность данных</h4>
+        <p>Все файлы обрабатываются локально и автоматически удаляются через час</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadBox = document.getElementById('uploadBox');
+    const fileInput = document.getElementById('fileInput');
+    const fileNameDiv = document.getElementById('fileName');
+    const selectFileBtn = document.getElementById('selectFileBtn');
+    const convertBtn = document.getElementById('convertBtn');
+    const uploadForm = document.getElementById('uploadForm');
+    
+    // Обработка выбора файла
+    selectFileBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        fileInput.click();
+    });
+    
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            fileNameDiv.textContent = `Выбран файл: ${this.files[0].name}`;
+            fileNameDiv.style.display = 'block';
+        }
+    });
+    
+    // Drag & Drop
+    uploadBox.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+    
+    uploadBox.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+    });
+    
+    uploadBox.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            fileNameDiv.textContent = `Выбран файл: ${e.dataTransfer.files[0].name}`;
+            fileNameDiv.style.display = 'block';
+        }
+    });
+    
+    // Проверка перед отправкой
+    uploadForm.addEventListener('submit', function(e) {
+        if (!fileInput.files.length) {
+            e.preventDefault();
+            alert('Пожалуйста, выберите файл');
+            return false;
+        }
+        
+        // Показываем индикатор загрузки
+        convertBtn.innerHTML = 'Обработка...';
+        convertBtn.disabled = true;
+    });
+});
+</script>
+{% endblock %}
